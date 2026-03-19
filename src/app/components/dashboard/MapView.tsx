@@ -39,8 +39,17 @@ const markerColors = {
   resolved: "#1FAF5A",
 };
 
-export function MapView() {
+export function MapView({ reports = [] }: { reports?: any[] }) {
   const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
+
+  const displayMarkers: MapMarker[] = reports.length > 0 ? reports.map(r => ({
+    id: String(r.id),
+    lat: Number(r.latitude) || 14.6928,
+    lng: Number(r.longitude) || -17.4467,
+    type: r.status as any,
+    title: r.title,
+    location: r.location
+  })) : markers;
 
   return (
     <div className="rounded-xl border border-border overflow-hidden relative h-[380px] bg-card/40 backdrop-blur-xl">
@@ -78,7 +87,7 @@ export function MapView() {
         zoom={12}
         dprs={[1, 2]}
       >
-        {markers.map((marker) => (
+        {displayMarkers.map((marker) => (
           <Marker
             key={marker.id}
             width={40}

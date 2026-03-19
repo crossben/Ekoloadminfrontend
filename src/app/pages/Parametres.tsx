@@ -1,11 +1,50 @@
-import { Settings, Users, MapPin, Bell, Brain, Shield } from "lucide-react";
+import { Settings as SettingsIcon, Users, MapPin, Bell, Brain, Shield } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "../../lib/api";
 
 export function Parametres() {
-  const [notifications, setNotifications] = useState(true);
-  const [autoAssign, setAutoAssign] = useState(true);
-  const [aiAnalysis, setAiAnalysis] = useState(true);
+  const [settings, setSettings] = useState({
+    notifications: true,
+    autoAssign: true,
+    aiAnalysis: true,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/settings");
+      if (response.data.settings) {
+        setSettings(response.data.settings);
+      }
+    } catch (error) {
+      console.error("Failed to fetch settings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSetting = async (key: keyof typeof settings) => {
+    const newSettings = { ...settings, [key]: !settings[key] };
+    setSettings(newSettings);
+    try {
+      // Assuming a generic update settings endpoint
+      await api.post("/settings/update", { settings: newSettings });
+    } catch (error) {
+      console.error("Failed to update settings:", error);
+      // Revert on error
+      setSettings(settings);
+    }
+  };
+
+  if (loading) {
+     return <div className="py-20 text-center text-white/50 text-xs">Chargement des paramètres...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -88,14 +127,14 @@ export function Parametres() {
               <p className="text-sm text-white/60">Recevoir des notifications pour les nouveaux signalements</p>
             </div>
             <button
-              onClick={() => setNotifications(!notifications)}
+              onClick={() => toggleSetting('notifications')}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                notifications ? "bg-[#1FAF5A]" : "bg-white/20"
+                settings.notifications ? "bg-[#1FAF5A]" : "bg-white/20"
               }`}
             >
               <div
                 className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                  notifications ? "translate-x-6" : "translate-x-0"
+                  settings.notifications ? "translate-x-6" : "translate-x-0"
                 }`}
               ></div>
             </button>
@@ -107,14 +146,14 @@ export function Parametres() {
               <p className="text-sm text-white/60">Assigner automatiquement les missions aux équipes</p>
             </div>
             <button
-              onClick={() => setAutoAssign(!autoAssign)}
+              onClick={() => toggleSetting('autoAssign')}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                autoAssign ? "bg-[#1FAF5A]" : "bg-white/20"
+                settings.autoAssign ? "bg-[#1FAF5A]" : "bg-white/20"
               }`}
             >
               <div
                 className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                  autoAssign ? "translate-x-6" : "translate-x-0"
+                  settings.autoAssign ? "translate-x-6" : "translate-x-0"
                 }`}
               ></div>
             </button>
@@ -126,14 +165,14 @@ export function Parametres() {
               <p className="text-sm text-white/60">Activer l'analyse automatique des signalements</p>
             </div>
             <button
-              onClick={() => setAiAnalysis(!aiAnalysis)}
+              onClick={() => toggleSetting('aiAnalysis')}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                aiAnalysis ? "bg-[#1FAF5A]" : "bg-white/20"
+                settings.aiAnalysis ? "bg-[#1FAF5A]" : "bg-white/20"
               }`}
             >
               <div
                 className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                  aiAnalysis ? "translate-x-6" : "translate-x-0"
+                  settings.aiAnalysis ? "translate-x-6" : "translate-x-0"
                 }`}
               ></div>
             </button>

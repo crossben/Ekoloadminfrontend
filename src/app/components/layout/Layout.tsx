@@ -1,8 +1,15 @@
-import { Outlet } from "react-router";
+import { Outlet, Navigate } from "react-router";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { useAuth } from "../../../context/AuthContext";
 
 export function Layout() {
+  const { token } = useAuth();
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className="flex min-h-screen bg-[#050e08]">
       <Sidebar />

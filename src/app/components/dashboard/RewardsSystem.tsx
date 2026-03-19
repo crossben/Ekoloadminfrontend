@@ -84,7 +84,7 @@ const badges: Badge[] = [
   },
 ];
 
-const topContributors: TopContributor[] = [
+const topContributorsList: TopContributor[] = [
   {
     rank: 1,
     name: "Amara Diallo",
@@ -93,41 +93,24 @@ const topContributors: TopContributor[] = [
     badges: 6,
     reports: 52,
   },
-  {
-    rank: 2,
-    name: "Kwame Mensah",
-    photo: "https://images.unsplash.com/photo-1652006135065-1a5790b66f86?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxBZnJpY2FuJTIweW91bmclMjBtYW4lMjBzdHVkZW50fGVufDF8fHx8MTc3MjEzNjkyMXww&ixlib=rb-4.1.0&q=80&w=1080",
-    points: 1180,
-    badges: 5,
-    reports: 43,
-  },
-  {
-    rank: 3,
-    name: "Fatou Ndiaye",
-    photo: "https://images.unsplash.com/photo-1639304952143-32c399b22a53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxBZnJpY2FuJTIweW91bmclMjB3b21hbiUyMGhhcHB5fGVufDF8fHx8MTc3MjEzNjkyMHww&ixlib=rb-4.1.0&q=80&w=1080",
-    points: 980,
-    badges: 4,
-    reports: 38,
-  },
-  {
-    rank: 4,
-    name: "Ibrahim Touré",
-    photo: "https://images.unsplash.com/photo-1668752600261-e56e7f3780b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxBZnJpY2FuJTIwbWFuJTIwcHJvZmVzc2lvbmFsJTIwcG9ydHJhaXR8ZW58MXx8fHwxNzcyMTM3ODA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    points: 875,
-    badges: 4,
-    reports: 34,
-  },
-  {
-    rank: 5,
-    name: "Aïcha Camara",
-    photo: "https://images.unsplash.com/photo-1668752741330-8adc5cef7485?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxBZnJpY2FuJTIwd29tYW4lMjBwcm9mZXNzaW9uYWx8ZW58MXx8fHwxNzcyMTM3ODA1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    points: 720,
-    badges: 3,
-    reports: 29,
-  },
 ];
 
-export function RewardsSystem() {
+export function RewardsSystem({ topContributors = [], badges: apiBadges = [] }: { topContributors?: any[], badges?: any[] }) {
+  // Merge apiBadges with icons from static badges list
+  const displayBadges = apiBadges.length > 0 ? apiBadges.map(ab => {
+    const original = badges.find(b => b.id === ab.id) || badges[0];
+    return { ...original, ...ab };
+  }) : badges;
+
+  const displayContributors = topContributors.length > 0 ? topContributors.map((tc, idx) => ({
+    rank: idx + 1,
+    name: tc.name,
+    photo: tc.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(tc.name)}&background=random`,
+    points: tc.points,
+    badges: Math.floor(tc.points / 100), // Mocked for now
+    reports: Math.floor(tc.points / 10), // Mocked for now
+  })) : topContributorsList;
+
   return (
     <div className="space-y-4">
       {/* Badges Section */}
@@ -146,7 +129,7 @@ export function RewardsSystem() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-          {badges.map((badge, index) => {
+          {displayBadges.map((badge, index) => {
             const Icon = badge.icon;
             return (
               <motion.div
@@ -195,7 +178,7 @@ export function RewardsSystem() {
         </div>
 
         <div className="space-y-2">
-          {topContributors.map((contributor, index) => (
+          {displayContributors.map((contributor, index) => (
             <motion.div
               key={contributor.rank}
               initial={{ opacity: 0, x: -20 }}

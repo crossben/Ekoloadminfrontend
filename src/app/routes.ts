@@ -8,8 +8,13 @@ import { Recompenses } from "./pages/Recompenses";
 import { Campagnes } from "./pages/Campagnes";
 import { Rapports } from "./pages/Rapports";
 import { Parametres } from "./pages/Parametres";
+import { Login } from "./pages/Login";
 
 export const router = createBrowserRouter([
+  {
+    path: "/login",
+    Component: Login,
+  },
   {
     path: "/",
     Component: Layout,

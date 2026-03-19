@@ -1,16 +1,14 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const data = [
-  { name: "Lun", signalements: 12, resolus: 8 },
-  { name: "Mar", signalements: 19, resolus: 15 },
-  { name: "Mer", signalements: 15, resolus: 12 },
-  { name: "Jeu", signalements: 22, resolus: 18 },
-  { name: "Ven", signalements: 28, resolus: 24 },
-  { name: "Sam", signalements: 18, resolus: 14 },
-  { name: "Dim", signalements: 14, resolus: 11 },
-];
+interface ActivityData {
+  name: string;
+  signalements: number;
+  resolus: number;
+}
 
-export function ActivityChart() {
+export function ActivityChart({ data }: { data?: ActivityData[] }) {
+  const chartData = data || [];
+
   return (
     <div className="bg-card/30 backdrop-blur-sm border border-border rounded-lg p-4">
       <div className="flex items-center justify-between mb-4">
@@ -28,7 +26,7 @@ export function ActivityChart() {
       </div>
 
       <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={data}>
+        <AreaChart data={chartData}>
           <defs>
             <linearGradient id="colorSignalements" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#1FAF5A" stopOpacity={0.3}/>

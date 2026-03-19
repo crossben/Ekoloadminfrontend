@@ -1,67 +1,46 @@
+import { useState, useEffect } from "react";
 import { Gift, Trophy, Star, Award, Plus, Send, Target, TrendingUp } from "lucide-react";
+import api from "../../lib/api";
 
 interface Reward {
-  id: string;
+  id: string | number;
   name: string;
   description: string;
   points: number;
   stock: number;
-  claimed: number;
+  claimed_count: number;
   category: string;
-  image: string;
+  image_url: string;
 }
 
-const rewards: Reward[] = [
-  {
-    id: "1",
-    name: "Bon d'achat 5000 FCFA",
-    description: "Utilisable dans les commerces partenaires",
-    points: 500,
-    stock: 150,
-    claimed: 48,
-    category: "Commerce",
-    image: "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=400",
-  },
-  {
-    id: "2",
-    name: "Kit de jardinage écologique",
-    description: "Graines bio et outils de jardinage",
-    points: 300,
-    stock: 80,
-    claimed: 35,
-    category: "Écologie",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400",
-  },
-  {
-    id: "3",
-    name: "T-shirt EKOLO",
-    description: "T-shirt officiel en coton bio",
-    points: 200,
-    stock: 200,
-    claimed: 87,
-    category: "Merchandising",
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400",
-  },
-  {
-    id: "4",
-    name: "Sac réutilisable premium",
-    description: "Sac shopping durable et élégant",
-    points: 150,
-    stock: 300,
-    claimed: 142,
-    category: "Accessoires",
-    image: "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=400",
-  },
-];
-
-const stats = [
-  { label: "Total récompenses", value: "15", icon: Gift, color: "text-blue-400", bg: "bg-blue-500/10" },
-  { label: "Points distribués", value: "245K", icon: Star, color: "text-yellow-400", bg: "bg-yellow-500/10" },
-  { label: "Utilisateurs actifs", value: "1,247", icon: Trophy, color: "text-primary", bg: "bg-primary/10" },
-  { label: "Taux d'engagement", value: "68%", icon: TrendingUp, color: "text-purple-400", bg: "bg-purple-500/10" },
-];
+// Mock data removed in favor of API fetching
 
 export function Recompenses() {
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRewards();
+  }, []);
+
+  const fetchRewards = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/rewards");
+      setRewards(response.data);
+    } catch (error) {
+      console.error("Failed to fetch rewards:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const dashboardStats = [
+    { label: "Total récompenses", value: rewards.length.toString(), icon: Gift, color: "text-blue-400", bg: "bg-blue-500/10" },
+    { label: "Points distribués", value: rewards.reduce((acc, r) => acc + (r.points * (r.claimed_count || 0)), 0).toLocaleString(), icon: Star, color: "text-yellow-400", bg: "bg-yellow-500/10" },
+    { label: "Réclamations", value: rewards.reduce((acc, r) => acc + (r.claimed_count || 0), 0).toString(), icon: Trophy, color: "text-primary", bg: "bg-primary/10" },
+    { label: "En stock", value: rewards.reduce((acc, r) => acc + r.stock, 0).toString(), icon: TrendingUp, color: "text-purple-400", bg: "bg-purple-500/10" },
+  ];
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -78,10 +57,10 @@ export function Recompenses() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        {stats.map((stat) => (
+        {dashboardStats.map((stat) => (
           <div key={stat.label} className="bg-card/30 backdrop-blur-sm border border-border rounded-lg p-3">
             <div className="flex items-center gap-2.5 mb-1.5">
-              <div className={`w-8 h-8 rounded-lg ${stat.bg} border border-${stat.color}/20 flex items-center justify-center`}>
+              <div className={`w-8 h-8 rounded-lg ${stat.bg} border border-${stat.color.split('-')[1]}-500/20 flex items-center justify-center`}>
                 <stat.icon className={`w-4 h-4 ${stat.color}`} />
               </div>
               <div>
@@ -109,51 +88,57 @@ export function Recompenses() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          {rewards.map((reward) => (
-            <div key={reward.id} className="bg-card/30 backdrop-blur-sm border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all group">
-              <div className="relative h-40 overflow-hidden bg-black/20">
-                <img 
-                  src={reward.image} 
-                  alt={reward.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute top-2 right-2 px-2 py-0.5 bg-primary/90 backdrop-blur-sm rounded-lg">
-                  <span className="text-white text-[10px] font-bold">{reward.points} pts</span>
-                </div>
-                <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded-lg">
-                  <span className="text-white text-[10px] font-medium">{reward.category}</span>
-                </div>
-              </div>
-              
-              <div className="p-3">
-                <h3 className="font-bold text-white text-sm mb-1">{reward.name}</h3>
-                <p className="text-[10px] text-muted-foreground mb-2.5">{reward.description}</p>
-                
-                <div className="flex items-center justify-between text-[10px] mb-2.5">
-                  <div>
-                    <span className="text-muted-foreground">Stock: </span>
-                    <span className="text-white font-bold">{reward.stock}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Réclamés: </span>
-                    <span className="text-primary font-bold">{reward.claimed}</span>
-                  </div>
-                </div>
-
-                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-2.5">
-                  <div 
-                    className="h-full bg-primary rounded-full"
-                    style={{ width: `${(reward.claimed / (reward.stock + reward.claimed)) * 100}%` }}
+          {loading ? (
+             <div className="col-span-4 py-10 text-center text-white/50 text-xs text-muted-foreground">Chargement des récompenses...</div>
+          ) : rewards.length === 0 ? (
+            <div className="col-span-4 py-10 text-center text-white/50 text-xs text-muted-foreground">Aucune récompense trouvée</div>
+          ) : (
+            rewards.map((reward) => (
+              <div key={reward.id} className="bg-card/30 backdrop-blur-sm border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all group">
+                <div className="relative h-40 overflow-hidden bg-black/20">
+                  <img 
+                    src={reward.image_url || "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=400"} 
+                    alt={reward.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
+                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-primary/90 backdrop-blur-sm rounded-lg">
+                    <span className="text-white text-[10px] font-bold">{reward.points} pts</span>
+                  </div>
+                  <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded-lg">
+                    <span className="text-white text-[10px] font-medium">{reward.category}</span>
+                  </div>
                 </div>
+                
+                <div className="p-3">
+                  <h3 className="font-bold text-white text-sm mb-1">{reward.name}</h3>
+                  <p className="text-[10px] text-muted-foreground mb-2.5 line-clamp-2">{reward.description}</p>
+                  
+                  <div className="flex items-center justify-between text-[10px] mb-2.5">
+                    <div>
+                      <span className="text-muted-foreground">Stock: </span>
+                      <span className="text-white font-bold">{reward.stock}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Réclamés: </span>
+                      <span className="text-primary font-bold">{reward.claimed_count || 0}</span>
+                    </div>
+                  </div>
 
-                <button className="w-full px-2.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
-                  <Send className="w-3.5 h-3.5" />
-                  Attribuer
-                </button>
+                  <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-2.5">
+                    <div 
+                      className="h-full bg-primary rounded-full"
+                      style={{ width: `${((reward.claimed_count || 0) / (reward.stock + (reward.claimed_count || 0)) || 0) * 100}%` }}
+                    />
+                  </div>
+
+                  <button className="w-full px-2.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
+                    <Send className="w-3.5 h-3.5" />
+                    Attribuer
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

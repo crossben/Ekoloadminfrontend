@@ -1,7 +1,9 @@
 import { Bell, Search, Globe, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "../../../context/AuthContext";
 
 export function Header() {
+  const { user } = useAuth();
   const [language, setLanguage] = useState("fr");
 
   const languages = [
@@ -48,7 +50,7 @@ export function Header() {
           </button>
 
           <button className="flex items-center gap-3 p-2 pl-3 rounded-lg bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] transition-colors">
-            <span className="text-sm font-semibold text-white/90">Admin</span>
+            <span className="text-sm font-semibold text-white/90">{user?.name || 'Admin'}</span>
             <div className="w-8 h-8 rounded-full bg-[#1FAF5A] flex items-center justify-center">
               <User className="w-4 h-4 text-white" />
             </div>

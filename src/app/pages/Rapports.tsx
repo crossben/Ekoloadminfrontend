@@ -1,25 +1,37 @@
 import { FileText, Download, Calendar, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { useState, useEffect } from "react";
+import api from "../../lib/api";
 
-const monthlyData = [
-  { month: "Jan", signalements: 145, resolus: 132, taux: 91 },
-  { month: "Fév", signalements: 178, resolus: 165, taux: 93 },
-  { month: "Mar", signalements: 162, resolus: 148, taux: 91 },
-  { month: "Avr", signalements: 195, resolus: 178, taux: 91 },
-  { month: "Mai", signalements: 210, resolus: 189, taux: 90 },
-  { month: "Juin", signalements: 187, resolus: 167, taux: 89 },
-];
-
-const zoneData = [
-  { zone: "Dakar Centre", count: 245 },
-  { zone: "Plateau", count: 198 },
-  { zone: "Yoff", count: 176 },
-  { zone: "Pikine", count: 165 },
-  { zone: "Ouakam", count: 142 },
-];
+// Mock data removed in favor of API fetching
 
 export function Rapports() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRapports();
+  }, []);
+
+  const fetchRapports = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/reports");
+      setData(response.data);
+    } catch (error) {
+      console.error("Failed to fetch reports:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading || !data) {
+     return <div className="py-20 text-center text-white/50 text-xs text-muted-foreground">Chargement des rapports...</div>;
+  }
+
+  const { stats, monthlyData, zoneData, availableReports } = data;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -46,9 +58,9 @@ export function Rapports() {
             <div className="w-12 h-12 rounded-lg bg-[#1FAF5A]/10 flex items-center justify-center">
               <FileText className="w-6 h-6 text-[#1FAF5A]" />
             </div>
-            <span className="text-sm font-bold text-[#1FAF5A]">+15%</span>
+            <span className={`text-sm font-bold ${stats.totalChange.startsWith('+') ? 'text-[#1FAF5A]' : 'text-red-400'}`}>{stats.totalChange}</span>
           </div>
-          <h3 className="text-3xl font-bold text-white mb-1">1,247</h3>
+          <h3 className="text-3xl font-bold text-white mb-1">{stats.totalCount.toLocaleString()}</h3>
           <p className="text-sm text-white/50">Signalements totaux (30j)</p>
         </div>
 
@@ -58,9 +70,9 @@ export function Rapports() {
             <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-blue-500" />
             </div>
-            <span className="text-sm font-bold text-blue-400">+3%</span>
+            <span className={`text-sm font-bold ${stats.resolutionChange.startsWith('+') ? 'text-blue-400' : 'text-red-400'}`}>{stats.resolutionChange}</span>
           </div>
-          <h3 className="text-3xl font-bold text-white mb-1">90.8%</h3>
+          <h3 className="text-3xl font-bold text-white mb-1">{stats.resolutionRate}%</h3>
           <p className="text-sm text-white/50">Taux de résolution</p>
         </div>
 
@@ -70,9 +82,9 @@ export function Rapports() {
             <div className="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
               <Calendar className="w-6 h-6 text-amber-500" />
             </div>
-            <span className="text-sm font-bold text-amber-400">-8%</span>
+            <span className={`text-sm font-bold ${stats.timeChange.startsWith('-') ? 'text-[#1FAF5A]' : 'text-amber-400'}`}>{stats.timeChange}</span>
           </div>
-          <h3 className="text-3xl font-bold text-white mb-1">4.2h</h3>
+          <h3 className="text-3xl font-bold text-white mb-1">{stats.averageTime}h</h3>
           <p className="text-sm text-white/50">Temps moyen de résolution</p>
         </div>
       </div>
@@ -170,11 +182,7 @@ export function Rapports() {
       >
         <h3 className="text-lg font-bold text-white mb-4">Rapports disponibles</h3>
         <div className="space-y-3">
-          {[
-            { title: "Rapport mensuel - Juin 2026", date: "26 Fév 2026", size: "2.4 MB" },
-            { title: "Analyse trimestrielle Q2 2026", date: "15 Fév 2026", size: "5.1 MB" },
-            { title: "Performance des équipes - Mai 2026", date: "01 Fév 2026", size: "1.8 MB" },
-          ].map((report, index) => (
+          {availableReports.map((report: any, index: number) => (
             <div
               key={index}
               className="flex items-center justify-between p-4 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:border-[#1FAF5A]/30 transition-colors"

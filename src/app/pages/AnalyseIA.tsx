@@ -2,25 +2,37 @@ import { Brain, Target, TrendingUp, Zap } from "lucide-react";
 import { StatsCard } from "../components/dashboard/StatsCard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { motion } from "motion/react";
+import { useState, useEffect } from "react";
+import api from "../../lib/api";
 
-const accuracyData = [
-  { category: "Plastique", accuracy: 96 },
-  { category: "Organique", accuracy: 92 },
-  { category: "Papier", accuracy: 89 },
-  { category: "Verre", accuracy: 94 },
-  { category: "Métaux", accuracy: 87 },
-];
-
-const performanceData = [
-  { month: "Jan", precision: 88, fiabilite: 85 },
-  { month: "Fév", precision: 90, fiabilite: 87 },
-  { month: "Mar", precision: 91, fiabilite: 89 },
-  { month: "Avr", precision: 93, fiabilite: 91 },
-  { month: "Mai", precision: 94, fiabilite: 92 },
-  { month: "Juin", precision: 95, fiabilite: 93 },
-];
+// Mock data removed in favor of API fetching
 
 export function AnalyseIA() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAnalysis();
+  }, []);
+
+  const fetchAnalysis = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/analysis");
+      setData(response.data);
+    } catch (error) {
+      console.error("Failed to fetch analysis:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading || !data) {
+     return <div className="py-20 text-center text-white/50 text-xs text-muted-foreground">Chargement des analyses IA...</div>;
+  }
+
+  const { stats, accuracyData, performanceData, riskZones } = data;
+
   return (
     <div className="space-y-6">
       <div>
@@ -31,33 +43,33 @@ export function AnalyseIA() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Précision globale"
-          value="93.8%"
-          change="+2.3%"
-          changeType="positive"
+          value={`${stats.globalAccuracy}%`}
+          change={stats.accuracyChange}
+          changeType={stats.accuracyChange.startsWith('+') ? "positive" : "negative"}
           icon={Target}
           delay={0}
         />
         <StatsCard
           title="Signalements analysés"
-          value="1,247"
-          change="+18%"
-          changeType="positive"
+          value={stats.analyzedCount.toLocaleString()}
+          change={stats.countChange}
+          changeType={stats.countChange.startsWith('+') ? "positive" : "negative"}
           icon={Brain}
           delay={0.1}
         />
         <StatsCard
           title="Fiabilité moyenne"
-          value="91.2%"
-          change="+1.8%"
-          changeType="positive"
+          value={`${stats.averageReliability}%`}
+          change={stats.reliabilityChange}
+          changeType={stats.reliabilityChange.startsWith('+') ? "positive" : "negative"}
           icon={TrendingUp}
           delay={0.2}
         />
         <StatsCard
           title="Temps de traitement"
-          value="2.3s"
-          change="-0.5s"
-          changeType="positive"
+          value={`${stats.processingTime}s`}
+          change={stats.timeChange}
+          changeType={stats.timeChange.startsWith('-') ? "positive" : "negative"}
           icon={Zap}
           delay={0.3}
         />
@@ -163,18 +175,14 @@ export function AnalyseIA() {
       >
         <h3 className="text-lg font-bold text-white mb-4">Zones à risque identifiées</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { zone: "Marché Sandaga", risk: 87, trend: "+12%" },
-            { zone: "Plage de Yoff", risk: 75, trend: "+8%" },
-            { zone: "Avenue Bourguiba", risk: 68, trend: "+5%" },
-          ].map((item, index) => (
+          {riskZones.map((item: any, index: number) => (
             <div
               key={item.zone}
               className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.05]"
             >
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-bold text-white">{item.zone}</h4>
-                <span className="text-xs text-amber-400 font-bold">{item.trend}</span>
+                <span className={`text-xs font-bold ${item.trend.startsWith('+') ? 'text-amber-400' : 'text-[#1FAF5A]'}`}>{item.trend}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">

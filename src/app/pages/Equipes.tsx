@@ -1,66 +1,57 @@
+import { useState, useEffect } from "react";
 import { Users, MapPin, CheckCircle, Clock } from "lucide-react";
 import { motion } from "motion/react";
+import api from "../../lib/api";
 
 interface TeamMember {
-  id: string;
+  id: string | number;
   name: string;
   role: string;
-  status: "available" | "on-mission" | "off-duty";
+  status: "available" | "on-mission" | "off-duty" | string;
   location: string;
-  missionsCompleted: number;
-  imageUrl: string;
+  missions_completed: number;
+  image_url: string;
 }
 
-const teams: TeamMember[] = [
-  {
-    id: "EQ-001",
-    name: "Équipe Alpha",
-    role: "Chef: Mamadou Diallo",
-    status: "on-mission",
-    location: "Marché Sandaga",
-    missionsCompleted: 127,
-    imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=faces",
-  },
-  {
-    id: "EQ-002",
-    name: "Équipe Bravo",
-    role: "Chef: Aïssatou Ndiaye",
-    status: "available",
-    location: "Station centrale",
-    missionsCompleted: 98,
-    imageUrl: "https://images.unsplash.com/photo-1639304952143-32c399b22a53?w=150&h=150&fit=crop&crop=faces",
-  },
-  {
-    id: "EQ-003",
-    name: "Équipe Charlie",
-    role: "Chef: Ousmane Ba",
-    status: "on-mission",
-    location: "Plage de Yoff",
-    missionsCompleted: 143,
-    imageUrl: "https://images.unsplash.com/photo-1652006135065-1a5790b66f86?w=150&h=150&fit=crop&crop=faces",
-  },
-  {
-    id: "EQ-004",
-    name: "Équipe Delta",
-    role: "Chef: Fatou Sarr",
-    status: "available",
-    location: "Station centrale",
-    missionsCompleted: 85,
-    imageUrl: "https://images.unsplash.com/photo-1723922969507-5285cff3d8a9?w=150&h=150&fit=crop&crop=faces",
-  },
-];
+// Mock data removed in favor of API fetching
 
 export function Equipes() {
-  const statusLabels = {
+  const [teams, setTeams] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTeams();
+  }, []);
+
+  const fetchTeams = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/teams");
+      setTeams(response.data);
+    } catch (error) {
+      console.error("Failed to fetch teams:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statusLabels: Record<string, string> = {
     available: "Disponible",
     "on-mission": "En mission",
     "off-duty": "Hors service",
   };
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     available: "bg-[#1FAF5A]/10 text-[#1FAF5A] border-[#1FAF5A]/20",
     "on-mission": "bg-amber-500/10 text-amber-400 border-amber-500/20",
     "off-duty": "bg-white/10 text-white/50 border-white/20",
+  };
+
+  const stats = {
+    total: teams.length,
+    available: teams.filter(t => t.status === 'available').length,
+    onMission: teams.filter(t => t.status === 'on-mission').length,
+    offDuty: teams.filter(t => t.status === 'off-duty').length,
   };
 
   return (
@@ -81,7 +72,7 @@ export function Equipes() {
           <div className="w-10 h-10 rounded-lg bg-[#1FAF5A]/10 flex items-center justify-center mb-3">
             <Users className="w-5 h-5 text-[#1FAF5A]" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-0.5">12</h3>
+          <h3 className="text-xl font-bold text-white mb-0.5">{stats.total}</h3>
           <p className="text-xs text-white/50">Équipes totales</p>
         </div>
 
@@ -90,7 +81,7 @@ export function Equipes() {
           <div className="w-10 h-10 rounded-lg bg-[#1FAF5A]/10 flex items-center justify-center mb-3">
             <CheckCircle className="w-5 h-5 text-[#1FAF5A]" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-0.5">5</h3>
+          <h3 className="text-xl font-bold text-white mb-0.5">{stats.available}</h3>
           <p className="text-xs text-white/50">Disponibles</p>
         </div>
 
@@ -99,7 +90,7 @@ export function Equipes() {
           <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center mb-3">
             <Clock className="w-5 h-5 text-amber-500" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-0.5">6</h3>
+          <h3 className="text-xl font-bold text-white mb-0.5">{stats.onMission}</h3>
           <p className="text-xs text-white/50">En mission</p>
         </div>
 
@@ -108,62 +99,68 @@ export function Equipes() {
           <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-3">
             <MapPin className="w-5 h-5 text-white/50" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-0.5">1</h3>
+          <h3 className="text-xl font-bold text-white mb-0.5">{stats.offDuty}</h3>
           <p className="text-xs text-white/50">Hors service</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {teams.map((team, index) => (
-          <motion.div
-            key={team.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="p-4 rounded-xl border border-white/[0.07] hover:border-[#1FAF5A]/30 transition-colors"
-            style={{ background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(10px)' }}
-          >
-            <div className="flex items-start gap-3">
-              <img
-                src={team.imageUrl}
-                alt={team.name}
-                className="w-14 h-14 rounded-full object-cover"
-              />
-              
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="text-sm font-bold text-white mb-0.5">{team.name}</h3>
-                    <p className="text-xs text-white/60">{team.role}</p>
+        {loading ? (
+          <div className="col-span-2 py-10 text-center text-white/50 text-xs">Chargement des équipes...</div>
+        ) : teams.length === 0 ? (
+          <div className="col-span-2 py-10 text-center text-white/50 text-xs">Aucune équipe trouvée</div>
+        ) : (
+          teams.map((team, index) => (
+            <motion.div
+              key={team.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="p-4 rounded-xl border border-white/[0.07] hover:border-[#1FAF5A]/30 transition-colors"
+              style={{ background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(10px)' }}
+            >
+              <div className="flex items-start gap-3">
+                <img
+                  src={team.image_url || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100"}
+                  alt={team.name}
+                  className="w-14 h-14 rounded-full object-cover bg-white/5"
+                />
+                
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="text-sm font-bold text-white mb-0.5">{team.name}</h3>
+                      <p className="text-xs text-white/60">{team.role}</p>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${statusColors[team.status] || 'bg-white/10 border-white/20'}`}>
+                      {statusLabels[team.status] || team.status}
+                    </span>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${statusColors[team.status]}`}>
-                    {statusLabels[team.status]}
-                  </span>
-                </div>
 
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="flex items-center gap-1.5 text-xs text-white/60">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{team.location}</span>
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="flex items-center gap-1.5 text-xs text-white/60">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>{team.location}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-white/60">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      <span>{team.missions_completed} missions</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-white/60">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>{team.missionsCompleted} missions</span>
-                  </div>
-                </div>
 
-                <div className="flex gap-1.5">
-                  <button className="flex-1 px-3 py-1.5 bg-[#1FAF5A] text-white rounded-lg font-semibold hover:bg-[#1FAF5A]/90 transition-colors text-xs">
-                    Assigner mission
-                  </button>
-                  <button className="px-3 py-1.5 bg-white/[0.05] border border-white/[0.07] rounded-lg text-white font-semibold hover:bg-white/[0.08] transition-colors text-xs">
-                    Localiser
-                  </button>
+                  <div className="flex gap-1.5">
+                    <button className="flex-1 px-3 py-1.5 bg-[#1FAF5A] text-white rounded-lg font-semibold hover:bg-[#1FAF5A]/90 transition-colors text-xs">
+                      Assigner mission
+                    </button>
+                    <button className="px-3 py-1.5 bg-white/[0.05] border border-white/[0.07] rounded-lg text-white font-semibold hover:bg-white/[0.08] transition-colors text-xs">
+                      Localiser
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   );
