@@ -82,12 +82,14 @@ export function Signalements() {
     active: "Actif",
     "in-progress": "En cours",
     resolved: "Résolu",
+    duplicate: "Doublon",
   };
 
   const statusColors: Record<string, string> = {
     active: "bg-red-500/10 text-red-400 border-red-500/20",
     "in-progress": "bg-amber-500/10 text-amber-400 border-amber-500/20",
     resolved: "bg-[#1FAF5A]/10 text-[#1FAF5A] border-[#1FAF5A]/20",
+    duplicate: "bg-purple-500/10 text-purple-400 border-purple-500/20",
   };
 
   return (
