@@ -52,7 +52,7 @@ export function MapView({ reports = [] }: { reports?: any[] }) {
   })) : markers;
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden relative h-[380px] bg-card/40 backdrop-blur-xl">
+    <div className="rounded-xl border border-border overflow-hidden relative h-[500px] bg-card/40 backdrop-blur-xl">
       {/* Location Badge */}
       <div className="absolute top-3 left-3 z-[1000] bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-primary/30">
         <div className="flex items-center gap-1.5 text-white">
@@ -82,7 +82,7 @@ export function MapView({ reports = [] }: { reports?: any[] }) {
 
       {/* Pigeon Map */}
       <Map
-        height={380}
+        height={500}
         center={[14.6928, -17.4467]}
         zoom={12}
         dprs={[1, 2]}

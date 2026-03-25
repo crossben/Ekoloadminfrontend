@@ -107,7 +107,7 @@ export function Login() {
         </form>
 
         <p className="mt-8 text-center text-sm text-white/30">
-          Powered by DeepMind Antigravity • Laravel 12
+          Powered by Gerex Atlas
         </p>
       </motion.div>
     </div>

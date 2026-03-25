@@ -49,7 +49,7 @@ export function RecentAlerts({ alerts }: { alerts?: Alert[] }) {
         </button>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto max-h-[420px] pr-1 custom-scrollbar">
         {displayAlerts.length === 0 && (
           <p className="text-[10px] text-muted-foreground text-center py-4">Aucune alerte récente</p>
         )}
