@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Users, MapPin, CheckCircle, Clock } from "lucide-react";
+import { Users, MapPin, CheckCircle, Clock, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import api from "../../lib/api";
+import { Modal } from "../components/ui/Modal";
 
 interface TeamMember {
   id: string | number;
   name: string;
+  leader_name: string;
   role: string;
   status: "available" | "on-mission" | "off-duty" | string;
   location: string;
@@ -18,6 +20,15 @@ interface TeamMember {
 export function Equipes() {
   const [teams, setTeams] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    leader_name: "",
+    role: "",
+    location: "",
+    status: "available"
+  });
 
   useEffect(() => {
     fetchTeams();
@@ -32,6 +43,21 @@ export function Equipes() {
       console.error("Failed to fetch teams:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      await api.post("/teams", formData);
+      setIsModalOpen(false);
+      setFormData({ name: "", leader_name: "", role: "", location: "", status: "available" });
+      fetchTeams();
+    } catch (error) {
+      console.error("Failed to create team:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,10 +87,72 @@ export function Equipes() {
           <h1 className="text-2xl font-bold text-white mb-0.5">Gestion des équipes terrain</h1>
           <p className="text-xs text-muted-foreground">Suivi en temps réel des équipes de collecte</p>
         </div>
-        <button className="px-3 py-2 bg-[#1FAF5A] text-white rounded-lg font-bold hover:bg-[#1FAF5A]/90 transition-colors text-xs">
-          Nouvelle mission
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="px-3 py-2 bg-[#1FAF5A] text-white rounded-lg font-bold hover:bg-[#1FAF5A]/90 transition-colors text-xs flex items-center gap-1.5"
+        >
+          <Plus className="w-4 h-4" />
+          Nouvelle équipe
         </button>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Ajouter une nouvelle équipe"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Nom de l'équipe</label>
+            <input
+              required
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors"
+              placeholder="ex: Équipe Alpha"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Chef d'équipe</label>
+              <input
+                required
+                value={formData.leader_name}
+                onChange={e => setFormData({ ...formData, leader_name: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors"
+                placeholder="Nom complet"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Rôle</label>
+              <input
+                required
+                value={formData.role}
+                onChange={e => setFormData({ ...formData, role: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors"
+                placeholder="ex: Collecte Ordures"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Localisation</label>
+            <input
+              required
+              value={formData.location}
+              onChange={e => setFormData({ ...formData, location: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors"
+              placeholder="ex: Médina, Dakar"
+            />
+          </div>
+          <button
+            disabled={isSubmitting}
+            type="submit"
+            className="w-full py-2.5 bg-[#1FAF5A] text-white font-bold rounded-lg hover:bg-[#1FAF5A]/90 transition-all active:scale-[0.98] disabled:opacity-50 mt-2 text-sm"
+          >
+            {isSubmitting ? "Création..." : "Créer l'équipe"}
+          </button>
+        </form>
+      </Modal>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div className="p-4 rounded-xl border border-white/[0.07]" 

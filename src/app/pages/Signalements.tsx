@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, MapPin, Clock, Eye } from "lucide-react";
+import { Search, Filter, MapPin, Clock, Eye, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import api from "../../lib/api";
+import { Modal } from "../components/ui/Modal";
 
 interface Signalement {
   id: string | number;
@@ -22,6 +23,15 @@ export function Signalements() {
   const [searchTerm, setSearchTerm] = useState("");
   const [signalements, setSignalements] = useState<Signalement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    location: "",
+    type: "Décharge sauvage",
+    priority: "medium"
+  });
 
   useEffect(() => {
     fetchSignalements();
@@ -36,6 +46,27 @@ export function Signalements() {
       console.error("Failed to fetch signalements:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      await api.post("/signalements", formData);
+      setIsModalOpen(false);
+      setFormData({
+        title: "",
+        description: "",
+        location: "",
+        type: "Décharge sauvage",
+        priority: "medium"
+      });
+      fetchSignalements();
+    } catch (error) {
+      console.error("Failed to create signalement:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -66,10 +97,87 @@ export function Signalements() {
           <h1 className="text-xl font-bold text-white mb-1">Gestion des signalements</h1>
           <p className="text-xs text-white/50">Liste complète des signalements environnementaux</p>
         </div>
-        <button className="px-3 py-1.5 bg-[#1FAF5A] text-white rounded-lg font-bold hover:bg-[#1FAF5A]/90 transition-colors text-xs">
-          Exporter
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="px-3 py-1.5 bg-[#1FAF5A] text-white rounded-lg font-bold hover:bg-[#1FAF5A]/90 transition-colors text-xs flex items-center gap-1.5"
+        >
+          <Plus className="w-4 h-4" />
+          Signaler un incident
         </button>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Nouveau signalement"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Titre de l'incident</label>
+            <input
+              required
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors"
+              placeholder="ex: Accumulation de déchets"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Description</label>
+            <textarea
+              required
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors h-20 resize-none"
+              placeholder="Précisions sur l'incident..."
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Localisation</label>
+            <input
+              required
+              value={formData.location}
+              onChange={e => setFormData({ ...formData, location: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors"
+              placeholder="ex: Marché de Colobane"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Type</label>
+              <select
+                value={formData.type}
+                onChange={e => setFormData({ ...formData, type: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors"
+              >
+                <option value="Décharge sauvage">Décharge sauvage</option>
+                <option value="Pollution eau">Pollution eau</option>
+                <option value="Déforestation">Déforestation</option>
+                <option value="Inondation">Inondation</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Priorité</label>
+              <select
+                value={formData.priority}
+                onChange={e => setFormData({ ...formData, priority: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#1FAF5A]/50 transition-colors"
+              >
+                <option value="low">Basse</option>
+                <option value="medium">Moyenne</option>
+                <option value="high">Haute</option>
+              </select>
+            </div>
+          </div>
+          <button
+            disabled={isSubmitting}
+            type="submit"
+            className="w-full py-2.5 bg-[#1FAF5A] text-white font-bold rounded-lg hover:bg-[#1FAF5A]/90 transition-all active:scale-[0.98] disabled:opacity-50 mt-2 text-sm"
+          >
+            {isSubmitting ? "Envoi..." : "Signaler l'incident"}
+          </button>
+        </form>
+      </Modal>
 
       <div className="flex gap-3">
         <div className="flex-1 relative">

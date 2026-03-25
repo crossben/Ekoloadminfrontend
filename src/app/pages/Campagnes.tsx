@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Megaphone, Plus, Calendar, Users, Target, TrendingUp, Eye, MessageSquare, Share2, BarChart3 } from "lucide-react";
+import { motion } from "motion/react";
 import api from "../../lib/api";
+import { Modal } from "../components/ui/Modal";
 
 interface Campaign {
   id: string | number;
@@ -32,6 +34,17 @@ export function Campagnes() {
   const [data, setData] = useState<{ campaigns: Campaign[], stats: any } | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    status: "active",
+    start_date: "",
+    end_date: "",
+    target_goal: 0,
+    category: ""
+  });
 
   useEffect(() => {
     fetchCampaigns();
@@ -46,6 +59,29 @@ export function Campagnes() {
       console.error("Failed to fetch campaigns:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      await api.post("/campaigns", formData);
+      setIsModalOpen(false);
+      setFormData({
+        title: "",
+        description: "",
+        status: "active",
+        start_date: "",
+        end_date: "",
+        target_goal: 0,
+        category: ""
+      });
+      fetchCampaigns();
+    } catch (error) {
+      console.error("Failed to create campaign:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -66,11 +102,94 @@ export function Campagnes() {
           <h1 className="text-2xl font-bold text-white mb-0.5">Campagnes écologiques</h1>
           <p className="text-xs text-muted-foreground">Mobilisez les citoyens autour de projets environnementaux</p>
         </div>
-        <button className="px-3 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-colors flex items-center gap-2 shadow-lg shadow-primary/20 text-xs">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="px-3 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-colors flex items-center gap-2 shadow-lg shadow-primary/20 text-xs"
+        >
           <Plus className="w-4 h-4" />
-          Nouvelle campagne
+          Lancer une campagne
         </button>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Démarrer une nouvelle campagne"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Titre de la campagne</label>
+            <input
+              required
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              placeholder="ex: Opération Plages Propres"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Description</label>
+            <textarea
+              required
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors h-20 resize-none"
+              placeholder="Objectifs et détails de l'action..."
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Date de début</label>
+              <input
+                required
+                type="date"
+                value={formData.start_date}
+                onChange={e => setFormData({ ...formData, start_date: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Date de fin</label>
+              <input
+                required
+                type="date"
+                value={formData.end_date}
+                onChange={e => setFormData({ ...formData, end_date: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Objectif (Participants)</label>
+              <input
+                required
+                type="number"
+                value={formData.target_goal}
+                onChange={e => setFormData({ ...formData, target_goal: parseInt(e.target.value) || 0 })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Catégorie</label>
+              <input
+                required
+                value={formData.category}
+                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                placeholder="ex: Nettoyage, Recyclage..."
+              />
+            </div>
+          </div>
+          <button
+            disabled={isSubmitting}
+            type="submit"
+            className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all active:scale-[0.98] disabled:opacity-50 mt-2 text-sm"
+          >
+            {isSubmitting ? "Lancement..." : "Lancer la campagne"}
+          </button>
+        </form>
+      </Modal>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">

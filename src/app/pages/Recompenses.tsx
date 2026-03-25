@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Gift, Trophy, Star, Award, Plus, Send, Target, TrendingUp } from "lucide-react";
+import { motion } from "motion/react";
 import api from "../../lib/api";
+import { Modal } from "../components/ui/Modal";
 
 interface Reward {
   id: string | number;
@@ -16,8 +18,17 @@ interface Reward {
 // Mock data removed in favor of API fetching
 
 export function Recompenses() {
-  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [data, setData] = useState<{ rewards: Reward[], topRecipients: any[] } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    points: 0,
+    stock: 0,
+    category: ""
+  });
 
   useEffect(() => {
     fetchRewards();
@@ -27,13 +38,31 @@ export function Recompenses() {
     try {
       setLoading(true);
       const response = await api.get("/rewards");
-      setRewards(response.data);
+      setData(response.data);
     } catch (error) {
       console.error("Failed to fetch rewards:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      await api.post("/rewards", formData);
+      setIsModalOpen(false);
+      setFormData({ name: "", description: "", points: 0, stock: 0, category: "" });
+      fetchRewards();
+    } catch (error) {
+      console.error("Failed to create reward:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const rewards = data?.rewards || [];
+  const topRecipients = data?.topRecipients || [];
 
   const dashboardStats = [
     { label: "Total récompenses", value: rewards.length.toString(), icon: Gift, color: "text-blue-400", bg: "bg-blue-500/10" },
@@ -49,11 +78,82 @@ export function Recompenses() {
           <h1 className="text-2xl font-bold text-white mb-0.5">Gestion des récompenses</h1>
           <p className="text-xs text-muted-foreground">Motivez les citoyens avec un système de points</p>
         </div>
-        <button className="px-3 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-colors flex items-center gap-2 shadow-lg shadow-primary/20 text-xs">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="px-3 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-colors flex items-center gap-2 shadow-lg shadow-primary/20 text-xs"
+        >
           <Plus className="w-4 h-4" />
           Nouvelle récompense
         </button>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Ajouter une nouvelle récompense"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Nom de la récompense</label>
+            <input
+              required
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              placeholder="ex: Bon d'achat Alimentaire"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Description</label>
+            <textarea
+              required
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors h-20 resize-none"
+              placeholder="Description de la récompense..."
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Points requis</label>
+              <input
+                required
+                type="number"
+                value={formData.points}
+                onChange={e => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Stock initial</label>
+              <input
+                required
+                type="number"
+                value={formData.stock}
+                onChange={e => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Catégorie</label>
+            <input
+              required
+              value={formData.category}
+              onChange={e => setFormData({ ...formData, category: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              placeholder="ex: Alimentation, Écologie..."
+            />
+          </div>
+          <button
+            disabled={isSubmitting}
+            type="submit"
+            className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all active:scale-[0.98] disabled:opacity-50 mt-2 text-sm"
+          >
+            {isSubmitting ? "Création..." : "Créer la récompense"}
+          </button>
+        </form>
+      </Modal>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -150,21 +250,20 @@ export function Recompenses() {
         </div>
         
         <div className="space-y-2.5">
-          {[
-            { name: "Amara Diallo", points: 1450, rewards: 8, photo: "https://images.unsplash.com/photo-1723922969507-5285cff3d8a9?w=100" },
-            { name: "Kwame Mensah", points: 1180, rewards: 6, photo: "https://images.unsplash.com/photo-1652006135065-1a5790b66f86?w=100" },
-            { name: "Fatou Ndiaye", points: 980, rewards: 5, photo: "https://images.unsplash.com/photo-1639304952143-32c399b22a53?w=100" },
-          ].map((user, index) => (
+          {topRecipients.map((user, index) => (
             <div key={user.name} className="flex items-center gap-3 p-2.5 bg-black/20 border border-border rounded-lg">
               <div className="text-sm font-bold text-primary">#{index + 1}</div>
-              <img src={user.photo} alt={user.name} className="w-10 h-10 rounded-full object-cover border-2 border-primary/30" />
+              <img src={user.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} alt={user.name} className="w-10 h-10 rounded-full object-cover border-2 border-primary/30" />
               <div className="flex-1">
                 <h4 className="font-bold text-white text-xs">{user.name}</h4>
-                <p className="text-[10px] text-muted-foreground">{user.points} points • {user.rewards} récompenses</p>
+                <p className="text-[10px] text-muted-foreground">{user.points} points</p>
               </div>
               <Award className="w-4 h-4 text-yellow-400" />
             </div>
           ))}
+          {topRecipients.length === 0 && (
+            <p className="text-[10px] text-muted-foreground text-center py-4">Aucun bénéficiaire enregistré</p>
+          )}
         </div>
       </div>
     </div>

@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Brain, Lock, Mail, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
+import { useNavigate } from "react-router";
 
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, token } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token) {
+      navigate("/", { replace: true });
+    }
+  }, [token, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,6 +24,7 @@ export function Login() {
     setLoading(true);
     try {
       await login(email, password);
+      navigate("/", { replace: true });
     } catch (err: any) {
       setError(err.message);
     } finally {
